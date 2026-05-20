@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="
+http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd">
+    <error-handler name="global-error-handler" doc:id="dc15a9bf-b87a-4d7c-9295-b043279a47d3">
+
+
+        <on-error-propagate enableNotifications="true" logException="true">
+            <ee:transform doc:name="Transform Message">
+                <ee:message>
+                    <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+    errorType: error.errorType,
+    message: error.description
+}]]></ee:set-payload>
+                </ee:message>
+                <ee:variables>
+                    <ee:set-variable variableName="httpStatus"><![CDATA[%dw 2.0
+output application/java
+---
+if ( error.errorType == 'HTTP:TIMEOUT' ) 408
+else if ( error.errorType == 'HTTP:BAD_REQUEST' ) 400
+else 500]]></ee:set-variable>
+                </ee:variables>
+            </ee:transform>
+            <logger level="INFO" doc:name="Logger" doc:id="307b61c1-b64f-4a1b-9451-d9019fa48640" message="#[payload]"/>
+        
+</on-error-propagate>
+    </error-handler>
+</mule>

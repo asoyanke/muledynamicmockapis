@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mule xmlns:tls="http://www.mulesoft.org/schema/mule/tls" xmlns:api-gateway="http://www.mulesoft.org/schema/mule/api-gateway" xmlns:os="http://www.mulesoft.org/schema/mule/os" xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:apikit="http://www.mulesoft.org/schema/mule/mule-apikit"
+    xmlns:doc="http://www.mulesoft.org/schema/mule/documentation" xmlns:ee="http://www.mulesoft.org/schema/mule/ee/core"
+    xmlns:http="http://www.mulesoft.org/schema/mule/http" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd http://www.mulesoft.org/schema/mule/mule-apikit http://www.mulesoft.org/schema/mule/mule-apikit/current/mule-apikit.xsd http://www.mulesoft.org/schema/mule/ee/core http://www.mulesoft.org/schema/mule/ee/core/current/mule-ee.xsd 
+http://www.mulesoft.org/schema/mule/os http://www.mulesoft.org/schema/mule/os/current/mule-os.xsd
+http://www.mulesoft.org/schema/mule/api-gateway http://www.mulesoft.org/schema/mule/api-gateway/current/mule-api-gateway.xsd
+http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/current/mule-tls.xsd">
+
+    <configuration doc:name="Configuration" doc:id="b7e64670-f8a5-4839-b265-af5eadc46dd3" defaultErrorHandler-ref="global-error-handler" />
+    
+    <os:config name="ObjectStore_Config" doc:name="ObjectStore Config" doc:id="eddf7d7a-6214-4c1c-862d-57d10038a87c" />
+    
+    <os:object-store name="MockResponses" doc:name="Object store" doc:id="d312dfa6-1408-489f-bde6-c2f3a4a816f6" expirationInterval="30" expirationIntervalUnit="DAYS" config-ref="ObjectStore_Config" />
+    
+    <api-gateway:autodiscovery apiId="20919037" ignoreBasePath="true" doc:name="API Autodiscovery" doc:id="ebe65054-bdf2-41b4-94d9-1afb6b443e6c" flowRef="dynamic-mock-apis-main" />
+    
+    <configuration-properties doc:name="Configuration properties" doc:id="99e88eb1-842b-478c-96b5-3aaad50f6df1" file="global.yaml" />
+
+    <http:listener-config name="dynamic-mock-apis-httpListenerConfig">
+        <http:listener-connection host="0.0.0.0" port="${http.port}">
+        </http:listener-connection>
+    </http:listener-config>
+
+    <tls:context name="TLS_Context" doc:name="TLS Context" doc:id="3cca994c-cbe1-4b8a-819c-f80fec31c2c2" >
+        <tls:key-store type="jks" path="server.jks" alias="mule" keyPassword="password" password="password" />
+    </tls:context>
+    
+    <flow name="dynamic-mock-apis-main">
+        <http:listener config-ref="dynamic-mock-apis-httpListenerConfig" path="/api/*">
+            <http:response statusCode="#[vars.httpStatus default 200]">
+                <http:headers><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
+            </http:response>
+            <http:error-response statusCode="#[vars.httpStatus default 500]">
+                <http:body><![CDATA[#[payload]]]></http:body>
+                <http:headers><![CDATA[#[vars.outboundHeaders default {}]]]></http:headers>
+            </http:error-response>
+        </http:listener>
+        <ee:transform doc:name="Transform Message" doc:id="a492dd5b-d53c-43ee-ab9e-66e30d9a138f">
+            <ee:message>
+                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+            </ee:message>
+            <ee:variables>
+                <ee:set-variable variableName="request"><![CDATA[%dw 2.0
+var path=((attributes.requestUri splitBy '/api/mock')[1] default '')
+output application/json
+---
+{
+    method: attributes.method default '',
+    requestUri: attributes.requestUri default '',
+    path: path,
+    key: (attributes.method default '') ++ path,
+    oskey: attributes.queryParams.key default ''
+}]]></ee:set-variable>
+                <ee:set-variable variableName="requestPayload"><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-variable>
+            </ee:variables>
+        </ee:transform>
+        <logger level="INFO" doc:name="Logger" doc:id="47d271ad-90a2-4948-a0b7-ab2e7b9a3fb0" message="#[vars.request]" />
+        <choice doc:name="Choice" doc:id="0a42ce2b-3d71-49fe-928f-e8db51f92e18">
+            <when expression="#[vars.request.requestUri startsWith '/api/mock']">
+                <flow-ref doc:name="dynamic-mock-apis-mock-flow" doc:id="f52e1bd2-f0a6-4f7f-8175-aa8fc9278cc3" name="dynamic-mock-apis-mock-flow" />
+            </when>
+            <when expression="#[vars.request.requestUri startsWith '/api/os']">
+                <flow-ref doc:name="dynamic-mock-apis-os-flow" doc:id="c5869414-ffb6-426f-b4d5-75dbd0bafee9" name="dynamic-mock-apis-os-flow" />
+            </when>
+            <otherwise>
+                <ee:transform doc:name="Transform Message" doc:id="42d0003e-ad26-48d5-9ca5-36e5bb14734f">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/java
+---
+{
+    message: 'unknown'
+}]]></ee:set-payload>
+                    </ee:message>
+                </ee:transform>
+            </otherwise>
+        </choice>
+    </flow>
+
+    <sub-flow name="dynamic-mock-apis-mock-flow" doc:id="c4bf6223-b72e-4895-89ef-4968a800d38f" >
+        <os:retrieve doc:name="Retrieve" doc:id="39678d7e-8e9a-49cd-b623-e12ca4be913d" key="#[vars.request.key]" objectStore="MockResponses">
+            <os:default-value ><![CDATA[#[%dw 2.0
+output application/java
+---
+{
+    message: 'not found'
+}]]]></os:default-value>
+        </os:retrieve>
+        <ee:transform doc:name="Transform Message" doc:id="d0d25a59-1d00-4a05-9e88-84197aa767bb" >
+            <ee:message >
+                <ee:set-payload ><![CDATA[%dw 2.0
+output application/json
+---
+payload.payload]]></ee:set-payload>
+            </ee:message>
+            <ee:variables >
+                <ee:set-variable variableName="httpStatus" ><![CDATA[%dw 2.0
+output application/java
+---
+payload.statuscode default 500]]></ee:set-variable>
+            </ee:variables>
+        </ee:transform>
+    </sub-flow>
+
+    <sub-flow name="dynamic-mock-apis-os-flow" doc:id="02f0e861-fad8-45e9-adef-003990d6fc49">
+        <choice doc:name="Choice" doc:id="d1cb4ecb-bba6-4683-8bc7-6e3329a781b9">
+            <when expression="#['POST' == vars.request.method]">
+                <ee:transform doc:name="Transform Message" doc:id="605ab3c8-7573-4f59-87c7-88cf033c9cf7">
+                    <ee:message>
+                        <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+{
+    key: vars.requestPayload.method ++ vars.requestPayload.path ,
+    value: vars.requestPayload
+}]]></ee:set-payload>
+                    </ee:message>
+                </ee:transform>
+                <os:store doc:id="d1700c46-b306-49cc-93af-1d3e195b0de9" key="#[payload.key]" objectStore="MockResponses">
+                    <os:value><![CDATA[#[payload.value]]]></os:value>
+                </os:store>
+            </when>
+            <when expression="#['GET' == vars.request.method and isEmpty(vars.request.oskey)]">
+                <os:retrieve-all doc:name="Retrieve all" doc:id="e2a7f2f9-5064-4402-bcef-806e8b068a47" objectStore="MockResponses" />
+                <ee:transform doc:name="Transform Message" doc:id="dc0b36b7-2197-49b1-bd42-c1650ac13367">
+                            <ee:message>
+                                <ee:set-payload><![CDATA[%dw 2.0
+output application/json
+---
+payload]]></ee:set-payload>
+                            </ee:message>
+                        </ee:transform>
+            </when>
+             <when expression="#['GET' == vars.request.method and !isEmpty(vars.request.oskey)]">
+                <os:retrieve doc:name="Retrieve" doc:id="e344a953-b864-4d36-9dd1-7bf80dde725e" key="#[vars.request.oskey]" objectStore="MockResponses">
+                    <os:default-value ><![CDATA[#[%dw 2.0
+output application/java
+---
+{
+    message: 'not found'
+}]]]></os:default-value>
+                </os:retrieve>
+             </when>
+        </choice>
+    </sub-flow>
+
+</mule>

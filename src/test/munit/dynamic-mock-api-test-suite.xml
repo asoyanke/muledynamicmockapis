@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<mule xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xmlns:munit="http://www.mulesoft.org/schema/mule/munit" xmlns:munit-tools="http://www.mulesoft.org/schema/mule/munit-tools"
+	xmlns="http://www.mulesoft.org/schema/mule/core" xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
+	xsi:schemaLocation="
+		http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+		http://www.mulesoft.org/schema/mule/munit http://www.mulesoft.org/schema/mule/munit/current/mule-munit.xsd
+		http://www.mulesoft.org/schema/mule/munit-tools  http://www.mulesoft.org/schema/mule/munit-tools/current/mule-munit-tools.xsd">
+	<munit:config name="dynamic-mock-api-test-suite.xml" />
+    <munit:test name="test-suite-dynamic-apis-test" doc:id="3affe6c9-451e-4326-96bf-1f15e570ad8b" description="Test">
+        <munit:execution >
+            <flow-ref doc:name="Flow-ref to dynamic-mock-apis-main" doc:id="84d39f91-8064-4ac9-9c07-cd51b54111a3" name="dynamic-mock-apis-main"/>
+        </munit:execution>
+    </munit:test>
+    <munit:test name="test-suite-dynamic-mock-get-apis-test" doc:id="b0f5f964-b10c-4e0f-9063-dea04f199737" description="Test">
+        <munit:behavior>
+            <munit:set-event doc:name="Set Event" doc:id="5a454a61-a29e-4378-be68-f81ce070c220" >
+                <munit:attributes value="#[%dw 2.0 output application/json --- {method: 'GET', requestUri: '/api/mock/test', queryParams:key:'GET/test'}]" encoding="UTF-8" mediaType="application/json" />
+            </munit:set-event>
+            <munit-tools:mock-when doc:name="Mock when Retrieve" doc:id="39a79912-bac4-422c-894b-49657e7960e6" processor="os:retrieve">
+                <munit-tools:with-attributes >
+                    <munit-tools:with-attribute whereValue="MockResponses" attributeName="objectStore" />
+                </munit-tools:with-attributes>
+                <munit-tools:then-return >
+                    <munit-tools:payload value="#[{}]" mediaType="application/json" encoding="UTF-8" />
+                </munit-tools:then-return>
+            </munit-tools:mock-when>
+        </munit:behavior>
+        <munit:execution >
+            <flow-ref doc:name="Flow-ref to dynamic-mock-apis-main" doc:id="1145631d-fc82-479d-8b49-29ad09bd6765" name="dynamic-mock-apis-main"/>
+        </munit:execution>
+    </munit:test>
+    <munit:test name="test-suite-dynamic-os-get-apis-test" doc:id="7584cfe8-656b-48f5-9cd1-943396833383" description="Test">
+        <munit:behavior>
+            <munit:set-event doc:name="Set Event" doc:id="054f3536-ea4e-452d-9228-e7e0b06b63de" >
+                <munit:attributes value="#[%dw 2.0 output application/json --- {method: 'GET', requestUri: '/api/os/test', queryParams:key:'GET/test'}]" encoding="UTF-8" mediaType="application/json" />
+            </munit:set-event>
+            <munit-tools:mock-when doc:name="Mock when Retrieve" doc:id="3855cbc0-59d1-4035-90de-76a040e2855c" processor="os:retrieve">
+                <munit-tools:with-attributes >
+                    <munit-tools:with-attribute whereValue="MockResponses" attributeName="objectStore" />
+                </munit-tools:with-attributes>
+                <munit-tools:then-return >
+                    <munit-tools:payload value="#[{}]" mediaType="application/json" encoding="UTF-8" />
+                </munit-tools:then-return>
+            </munit-tools:mock-when>
+        </munit:behavior>
+        <munit:execution >
+            <flow-ref doc:name="Flow-ref to dynamic-mock-apis-main" doc:id="4bb77ad4-e555-4bdf-a7c4-104ea98d38f1" name="dynamic-mock-apis-main"/>
+        </munit:execution>
+    </munit:test>
+    <munit:test name="test-suite-dynamic-os-getall-apis-test" doc:id="9c1e8dcc-4890-4e37-9ccb-3d6e54a75666" description="Test">
+        <munit:behavior>
+            <munit:set-event doc:name="Set Event" doc:id="c7bf07fe-b169-4f33-bc12-52ed3cda2406" >
+                <munit:attributes value="#[%dw 2.0 output application/json --- {method: 'GET', requestUri: '/api/os/test', queryParams:key:''}]" encoding="UTF-8" mediaType="application/json" />
+            </munit:set-event>
+            <munit-tools:mock-when doc:name="Mock when Retrieve" doc:id="e34527ea-e567-4598-89d0-589af4160363" processor="os:retrieve">
+                <munit-tools:with-attributes >
+                    <munit-tools:with-attribute whereValue="MockResponses" attributeName="objectStore" />
+                </munit-tools:with-attributes>
+                <munit-tools:then-return >
+                    <munit-tools:payload value="#[{}]" mediaType="application/json" encoding="UTF-8" />
+                </munit-tools:then-return>
+            </munit-tools:mock-when>
+        </munit:behavior>
+        <munit:execution >
+            <flow-ref doc:name="Flow-ref to dynamic-mock-apis-main" doc:id="13963da2-50ae-4319-9676-8f257b575ddb" name="dynamic-mock-apis-main"/>
+        </munit:execution>
+    </munit:test>
+    <munit:test name="test-suite-dynamic-os-post-apis-test" doc:id="f550f983-3fbd-453e-b4bc-fb37b2eb12f8" description="Test">
+        <munit:behavior>
+            <munit:set-event doc:name="Set Event" doc:id="940c3e73-d451-4816-af27-03d7047c2db4" >
+                <munit:payload value="#[%dw 2.0&#10;output application/json&#10;--- {&#10;  &quot;method&quot;: 'GET',&#10;  'statuscode': '200',&#10;  'path': '/test',&#10;  'payload': {&#10;    'message': 'TEST'&#10;  }&#10;}]" encoding="UTF-8" mediaType="application/json" />
+                <munit:attributes value="#[%dw 2.0 output application/json --- {method: 'POST', requestUri: '/api/os', queryParams:key:''}]" encoding="UTF-8" mediaType="application/json" />
+            </munit:set-event>
+            <munit-tools:mock-when doc:name="Mock when Store" doc:id="97163759-2fed-40b2-a8be-12faeb36ecb6" processor="os:store">
+                <munit-tools:with-attributes >
+                    <munit-tools:with-attribute whereValue="MockResponses" attributeName="objectStore" />
+                </munit-tools:with-attributes>
+                <munit-tools:then-return >
+                    <munit-tools:error typeId="OS:CONNECTIVITY" />
+                </munit-tools:then-return>
+            </munit-tools:mock-when>
+        </munit:behavior>
+        <munit:execution >
+            <flow-ref doc:name="Flow-ref to dynamic-mock-apis-main" doc:id="f45af09a-e81d-4280-a018-bcacd5db2972" name="dynamic-mock-apis-main"/>
+        </munit:execution>
+    </munit:test>
+    <munit:test name="test-suite-dynamic-os-post-apis-test-error" doc:id="cf231f26-5613-4194-9657-9dba4b697b12" description="Test" expectedErrorType="ANY">
+        <munit:behavior>
+            <munit:set-event doc:name="Set Event" doc:id="9f8c2e20-df71-47a2-8d6e-315ba8f63b65" >
+                <munit:attributes value="#[%dw 2.0 output application/json --- {method: 'POST', requestUri: '/api/os', queryParams:key:''}]" encoding="UTF-8" mediaType="application/json" />
+            </munit:set-event>
+            <munit-tools:mock-when doc:name="Mock when Store" doc:id="afe516b4-2f69-477e-885d-65ed29e1223d" processor="os:store">
+                <munit-tools:with-attributes >
+                    <munit-tools:with-attribute whereValue="MockResponses" attributeName="objectStore" />
+                </munit-tools:with-attributes>
+                <munit-tools:then-return >
+                    <munit-tools:error typeId="OS:CONNECTIVITY" />
+                </munit-tools:then-return>
+            </munit-tools:mock-when>
+        </munit:behavior>
+        <munit:execution >
+            <flow-ref doc:name="Flow-ref to dynamic-mock-apis-main" doc:id="ec2a37e8-3c22-479f-9254-4cac0ba70215" name="dynamic-mock-apis-main"/>
+        </munit:execution>
+    </munit:test>
+</mule>
