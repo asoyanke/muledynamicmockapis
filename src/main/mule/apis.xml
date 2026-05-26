@@ -36,12 +36,6 @@ http://www.mulesoft.org/schema/mule/tls http://www.mulesoft.org/schema/mule/tls/
             </http:error-response>
         </http:listener>
         <ee:transform doc:name="Transform Message" doc:id="a492dd5b-d53c-43ee-ab9e-66e30d9a138f">
-            <ee:message>
-                <ee:set-payload><![CDATA[%dw 2.0
-output application/json
----
-payload]]></ee:set-payload>
-            </ee:message>
             <ee:variables>
                 <ee:set-variable variableName="request"><![CDATA[%dw 2.0
 var path=((attributes.requestUri splitBy '/api/mock')[1] default '')
@@ -55,12 +49,13 @@ output application/json
     oskey: attributes.queryParams.key default ''
 }]]></ee:set-variable>
                 <ee:set-variable variableName="requestPayload"><![CDATA[%dw 2.0
+import try, orElse from dw::Runtime
 output application/json
 ---
-payload]]></ee:set-variable>
+try(() -> read(payload.^raw,'application/json')) orElse {}]]></ee:set-variable>
             </ee:variables>
         </ee:transform>
-        <logger level="INFO" doc:name="Logger" doc:id="47d271ad-90a2-4948-a0b7-ab2e7b9a3fb0" message="#[vars.request]" />
+        <logger level="INFO" doc:name="Logger" doc:id="47d271ad-90a2-4948-a0b7-ab2e7b9a3fb0" message="#[%dw 2.0 output application/json --- {request : vars.request, requestPayload: vars.requestPayload}]" />
         <choice doc:name="Choice" doc:id="0a42ce2b-3d71-49fe-928f-e8db51f92e18">
             <when expression="#[vars.request.requestUri startsWith '/api/mock']">
                 <flow-ref doc:name="dynamic-mock-apis-mock-flow" doc:id="f52e1bd2-f0a6-4f7f-8175-aa8fc9278cc3" name="dynamic-mock-apis-mock-flow" />
